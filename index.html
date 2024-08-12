@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mood-Based Caption Generator</title>
+    <style>
+        /* Add your custom CSS styles here */
+    </style>
+</head>
+<body>
+
+    <div id="uploadArea" onclick="triggerImageUpload()">
+        <p>Click to choose an image or drop one here</p>
+        <input type="file" id="imageUploader" accept="image/*" onchange="processImage()" style="display:none;">
+    </div>
+
+    <img id="displayImage" alt="Selected Image" style="display:none;">
+
+    <div id="moodSelection" style="display:none;">
+        <button class="moodOption" onclick="chooseMood('Joyful')">Joyful</button>
+        <button class="moodOption" onclick="chooseMood('Melancholy')">Melancholy</button>
+        <button class="moodOption" onclick="chooseMood('Furious')">Furious</button>
+        <button class="moodOption" onclick="chooseMood('Thrilled')">Thrilled</button>
+    </div>
+
+    <div id="moodDisplay"></div>
+
+    <button id="generateBtn" onclick="sendMoodData()" style="display:none;">Generate Caption</button>
+
+    <div id="captionOutput"></div>
+
+    <script>
+        function triggerImageUpload() {
+            document.getElementById('imageUploader').click();
+        }
+
+        function processImage() {
+            const input = document.getElementById('imageUploader');
+            const img = document.getElementById('displayImage');
+
+            // Show the uploaded image
+            img.src = URL.createObjectURL(input.files[0]);
+            img.style.display = 'block';
+
+            // Reveal mood selection options
+            document.getElementById('moodSelection').style.display = 'block';
+        }
+
+        function chooseMood(mood) {
+            document.getElementById('moodDisplay').textContent = 'Mood Selected: ' + mood;
+            document.getElementById('generateBtn').style.display = 'block';
+        }
+
+        function sendMoodData() {
+            const imgSrc = document.getElementById('displayImage').src;
+            const selectedMood = document.getElementById('moodDisplay').innerText.replace('Mood Selected: ', '');
+
+            // Send image path and mood data to the Flask backend via AJAX
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/generate_caption', true);
+            xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    const response = JSON.parse(xhr.responseText);
+                    showCaption(response.result);
+                }
+            };
+
+            xhr.send(JSON.stringify({ image_path: imgSrc, mood_category: selectedMood }));
+        }
+
+        function showCaption(caption) {
+            const outputArea = document.getElementById('captionOutput');
+            outputArea.innerHTML = ''; // Clear any previous captions
+
+            // Display the generated caption
+            const captionBox = document.createElement('div');
+            captionBox.className = 'captionBox';
+            captionBox.textContent = caption;
+            outputArea.appendChild(captionBox);
+        }
+    </script>
+
+</body>
+</html>
